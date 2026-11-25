@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!--
+            Résumé général.
+
+            Une page, une quinzaine de chiffres : ce qu'un dirigeant regarde
+            quand il n'a pas le temps de lire un bilan. Trésorerie, créances,
+            dettes, résultat, et les rapports entre eux.
+
+            Cet état ne calcule rien de neuf. Il reprend des grandeurs déjà
+            présentes ailleurs et les met côte à côte, parce que leur intérêt
+            vient précisément de leur rapprochement : une trésorerie de
+            cinquante mille euros ne veut rien dire tant qu'on ne sait pas
+            s'il y a dix mille ou deux cent mille de dettes à court terme en
+            face.
+
+            Universel, sans dépendance de localisation : il groupe par type de
+            compte, classification qu'Odoo attribue identiquement dans toutes
+            les localisations, et non par préfixe de numéro.
+
+            Les ratios sont volontairement peu nombreux. Un tableau de bord
+            qui affiche trente indicateurs n'en fait lire aucun.
+        -->
+
+        <record id="report_executive_summary" model="account.report">
+            <field name="name">Executive Summary</field>
+            <field name="name@fr">Résumé général</field>
+            <field name="name@es">Resumen general</field>
+            <field name="name@de">Gesamtübersicht</field>
+            <field name="name@nl">Algemeen overzicht</field>
+            <field name="name@it">Riepilogo generale</field>
+            <field name="name@pt_BR">Resumo geral</field>
+            <field name="filter_date_range" eval="True"/>
+            <field name="filter_journals" eval="True"/>
+            <field name="filter_multi_company">selector</field>
+            <field name="filter_period_comparison" eval="True"/>
+            <field name="default_opening_date_filter">this_year</field>
+            <field name="column_ids">
+                <record id="report_executive_summary_col" model="account.report.column">
+                    <field name="name">Amount</field>
+                    <field name="name@fr">Montant</field>
+                    <field name="name@es">Importe</field>
+                    <field name="name@de">Betrag</field>
+                    <field name="name@nl">Bedrag</field>
+                    <field name="name@it">Importo</field>
+                    <field name="name@pt_BR">Valor</field>
+                    <field name="expression_label">balance</field>
+                    <field name="figure_type">monetary</field>
+                </record>
+            </field>
+            <field name="line_ids">
+
+                <!-- ========================= ACTIVITÉ ========================= -->
+                <record id="exec_summary_activite" model="account.report.line">
+                    <field name="sequence" eval="10"/>
+                    <field name="name">ACTIVITY</field>
+                    <field name="name@fr">ACTIVITÉ</field>
+                    <field name="name@es">ACTIVIDAD</field>
+                    <field name="name@de">GESCHÄFTSTÄTIGKEIT</field>
+                    <field name="name@nl">ACTIVITEIT</field>
+                    <field name="name@it">ATTIVITÀ</field>
+                    <field name="name@pt_BR">ATIVIDADE</field>
+                    <field name="code">EXEC_ACTIVITE</field>
+                    <field name="hierarchy_level" eval="0"/>
+                    <field name="children_ids">
+
+                        <record id="exec_summary_produits" model="account.report.line">
+                            <field name="sequence" eval="20"/>
+                            <field name="name">Income</field>
+                            <field name="name@fr">Produits</field>
+                            <field name="name@es">Ingresos</field>
+                            <field name="name@de">Erträge</field>
+                            <field name="name@nl">Opbrengsten</field>
+                            <field name="name@it">Ricavi</field>
+                            <field name="name@pt_BR">Receitas</field>
+                            <field name="code">EXEC_PRODUITS</field>
+                            <field name="hierarchy_level" eval="2"/>
+                            <field name="expression_ids">
+                                <record id="exec_summary_produits_balance" model="account.report.expression">
+                                    <field name="label">balance</field>
+                                    <field name="engine">domain</field>
+                                    <field name="formula">[('account_id.internal_group', '=', 'income')]</field>
+                                    <field name="subformula">-sum</field>
+                                </record>
+                            </field>
+                        </record>
+
+                        <record id="exec_summary_charges" model="account.report.line">
+                            <field name="sequence" eval="30"/>
+                            <field name="name">Expenses</field>
+                            <field name="name@fr">Charges</field>
+                            <field name="name@es">Gastos</field>
+                            <field name="name@de">Aufwendungen</field>
+                            <field name="name@nl">Kosten</field>
+                            <field name="name@it">Costi</field>
+                            <field name="name@pt_BR">Despesas</field>
+                            <field name="code">EXEC_CHARGES</field>
+                            <field name="hierarchy_level" eval="2"/>
+                            <field name="expression_ids">
+                                <record id="exec_summary_charges_balance" model="account.report.expression">
+                                    <field name="label">balance</field>
+                                    <field name="engine">domain</field>
+                                    <field name="formula">[('account_id.internal_group', '=', 'expense')]</field>
+                                    <field name="subformula">sum</field>
+                                </record>
+                            </field>
+                        </record>
+
+                        <record id="exec_summary_resultat" model="account.report.line">
+                            <field name="sequence" eval="40"/>
+                            <field name="name">Result</field>
+                            <field name="name@fr">Résultat</field>
+                            <field name="name@es">Resultado</field>
+                            <field name="name@de">Ergebnis</field>
+                            <field name="name@nl">Resultaat</field>
+                            <field name="name@it">Risultato</field>
+                            <field name="name@pt_BR">Resultado</field>
+                            <field name="code">EXEC_RESULTAT</field>
+                            <field name="hierarchy_level" eval="1"/>
+                            <field name="aggregation_formula">EXEC_PRODUITS.balance - EXEC_CHARGES.balance</field>
+                        </record>
+                    </field>
+                </record>
+
+                <!-- ======================== TRÉSORERIE ======================== -->
+                <record id="exec_summary_tresorerie" model="account.report.line">
+                    <field name="sequence" eval="50"/>
+                    <field name="name">CASH</field>
+                    <field name="name@fr">TRÉSORERIE</field>
+                    <field name="name@es">TESORERÍA</field>
+                    <field name="name@de">LIQUIDITÄT</field>
+                    <field name="name@nl">LIQUIDE MIDDELEN</field>
+                    <field name="name@it">LIQUIDITÀ</field>
+                    <field name="name@pt_BR">TESOURARIA</field>
+                    <field name="code">EXEC_TRESORERIE</field>
+                    <field name="hierarchy_level" eval="0"/>
+                    <field name="children_ids">
+
+                        <record id="exec_summary_disponibilites" model="account.report.line">
+                            <field name="sequence" eval="60"/>
+                            <field name="name">Cash and bank</field>
+                            <field name="name@fr">Disponibilités</field>
+                            <field name="name@es">Efectivo y bancos</field>
+                            <field name="name@de">Kasse und Bank</field>
+                            <field name="name@nl">Kas en bank</field>
+                            <field name="name@it">Cassa e banche</field>
+                            <field name="name@pt_BR">Caixa e bancos</field>
+                            <field name="code">EXEC_DISPO</field>
+                            <field name="hierarchy_level" eval="2"/>
+                            <field name="expression_ids">
+                                <record id="exec_summary_dispo_balance" model="account.report.expression">
+                                    <field name="label">balance</field>
+                                    <field name="engine">domain</field>
+                                    <field name="formula">[('account_id.account_type', 'in', ('asset_cash', 'liability_credit_card'))]</field>
+                                    <field name="subformula">sum</field>
+                                    <!-- Portée « depuis l'origine » : une
+                                         trésorerie est un solde, pas un flux.
+                                         La lire sur la seule période afficherait
+                                         la variation et non le disponible. -->
+                                    <field name="date_scope">from_beginning</field>
+                                </record>
+                            </field>
+                        </record>
+                    </field>
+                </record>
+
+                <!-- ==================== BESOIN EN FONDS DE ROULEMENT ==================== -->
+                <record id="exec_summary_bfr" model="account.report.line">
+                    <field name="sequence" eval="70"/>
+                    <field name="name">WORKING CAPITAL</field>
+                    <field name="name@fr">BESOIN EN FONDS DE ROULEMENT</field>
+                    <field name="name@es">NECESIDAD DE CAPITAL CIRCULANTE</field>
+                    <field name="name@de">WORKING CAPITAL</field>
+                    <field name="name@nl">WERKKAPITAAL</field>
+                    <field name="name@it">CAPITALE CIRCOLANTE</field>
+                    <field name="name@pt_BR">CAPITAL DE GIRO</field>
+                    <field name="code">EXEC_BFR</field>
+                    <field name="hierarchy_level" eval="0"/>
+                    <field name="aggregation_formula">EXEC_CREANCES.balance + EXEC_STOCKS.balance - EXEC_DETTES.balance - EXEC_AUTRES_DETTES.balance</field>
+                    <field name="children_ids">
+
+                        <record id="exec_summary_creances" model="account.report.line">
+                            <field name="sequence" eval="80"/>
+                            <field name="name">Receivables</field>
+                            <field name="name@fr">Créances clients</field>
+                            <field name="name@es">Deudores comerciales</field>
+                            <field name="name@de">Forderungen</field>
+                            <field name="name@nl">Debiteuren</field>
+                            <field name="name@it">Crediti verso clienti</field>
+                            <field name="name@pt_BR">Contas a receber</field>
+                            <field name="code">EXEC_CREANCES</field>
+                            <field name="hierarchy_level" eval="2"/>
+                            <field name="expression_ids">
+                                <record id="exec_summary_creances_balance" model="account.report.expression">
+                                    <field name="label">balance</field>
+                                    <field name="engine">domain</field>
+                                    <field name="formula">[('account_id.account_type', '=', 'asset_receivable')]</field>
+                                    <field name="subformula">sum</field>
+                                    <field name="date_scope">from_beginning</field>
+                                </record>
+                            </field>
+                        </record>
+
+                        <record id="exec_summary_stocks" model="account.report.line">
+                            <field name="sequence" eval="90"/>
+                            <!--
+                                Le libellé disait « Stocks », le domaine lit
+                                tout l'actif circulant : taxe déductible,
+                                charges constatées d'avance, autres créances.
+                                Un utilisateur qui rapprochait la ligne de son
+                                inventaire ne retrouvait pas son chiffre et
+                                concluait que l'état était faux. Le domaine est
+                                le bon pour un besoin en fonds de roulement ;
+                                c'est le libellé qui mentait.
+                            -->
+                            <field name="name">Inventory and other current assets</field>
+                            <field name="name@fr">Stocks et autres créances</field>
+                            <field name="name@es">Existencias y otros activos corrientes</field>
+                            <field name="name@de">Vorräte und sonstige Forderungen</field>
+                            <field name="name@nl">Voorraden en overige vorderingen</field>
+                            <field name="name@it">Rimanenze e altri crediti</field>
+                            <field name="name@pt_BR">Estoques e outros ativos circulantes</field>
+                            <field name="code">EXEC_STOCKS</field>
+                            <field name="hierarchy_level" eval="2"/>
+                            <field name="expression_ids">
+                                <record id="exec_summary_stocks_balance" model="account.report.expression">
+                                    <field name="label">balance</field>
+                                    <field name="engine">domain</field>
+                                    <field name="formula">[('account_id.account_type', '=', 'asset_current')]</field>
+                                    <field name="subformula">sum</field>
+                                    <field name="date_scope">from_beginning</field>
+                                </record>
+                            </field>
+                        </record>
+
+                        <record id="exec_summary_dettes" model="account.report.line">
+                            <field name="sequence" eval="100"/>
+                            <field name="name">Payables</field>
+                            <field name="name@fr">Dettes fournisseurs</field>
+                            <field name="name@es">Acreedores comerciales</field>
+                            <field name="name@de">Verbindlichkeiten</field>
+                            <field name="name@nl">Crediteuren</field>
+                            <field name="name@it">Debiti verso fornitori</field>
+                            <field name="name@pt_BR">Contas a pagar</field>
+                            <field name="code">EXEC_DETTES</field>
+                            <field name="hierarchy_level" eval="2"/>
+                            <field name="expression_ids">
+                                <record id="exec_summary_dettes_balance" model="account.report.expression">
+                                    <field name="label">balance</field>
+                                    <field name="engine">domain</field>
+                                    <field name="formula">[('account_id.account_type', '=', 'liability_payable')]</field>
+                                    <field name="subformula">-sum</field>
+                                    <field name="date_scope">from_beginning</field>
+                                </record>
+                            </field>
+                        </record>
+
+                        <record id="exec_summary_autres_dettes" model="account.report.line">
+                            <field name="sequence" eval="105"/>
+                            <!--
+                                Le besoin en fonds de roulement retranchait les
+                                seuls fournisseurs. La taxe collectée, les
+                                salaires et les charges à payer sont dus au
+                                même titre : les omettre surévaluait le besoin
+                                du montant de la taxe de chaque vente, et la
+                                position nette de trésorerie qui s'en déduit
+                                paraissait d'autant plus mauvaise.
+                            -->
+                            <field name="name">Other current liabilities</field>
+                            <field name="name@fr">Autres dettes d'exploitation</field>
+                            <field name="name@es">Otros pasivos corrientes</field>
+                            <field name="name@de">Sonstige kurzfristige Verbindlichkeiten</field>
+                            <field name="name@nl">Overige kortlopende schulden</field>
+                            <field name="name@it">Altri debiti correnti</field>
+                            <field name="name@pt_BR">Outras contas a pagar</field>
+                            <field name="code">EXEC_AUTRES_DETTES</field>
+                            <field name="hierarchy_level" eval="2"/>
+                            <field name="expression_ids">
+                                <record id="exec_summary_autres_dettes_balance" model="account.report.expression">
+                                    <field name="label">balance</field>
+                                    <field name="engine">domain</field>
+                                    <field name="formula">[('account_id.account_type', '=', 'liability_current')]</field>
+                                    <field name="subformula">-sum</field>
+                                    <field name="date_scope">from_beginning</field>
+                                </record>
+                            </field>
+                        </record>
+                    </field>
+                </record>
+
+                <!-- ======================== SITUATION ======================== -->
+                <record id="exec_summary_situation" model="account.report.line">
+                    <field name="sequence" eval="110"/>
+                    <field name="name">POSITION</field>
+                    <field name="name@fr">SITUATION</field>
+                    <field name="name@es">SITUACIÓN</field>
+                    <field name="name@de">LAGE</field>
+                    <field name="name@nl">POSITIE</field>
+                    <field name="name@it">SITUAZIONE</field>
+                    <field name="name@pt_BR">SITUAÇÃO</field>
+                    <field name="code">EXEC_SITUATION</field>
+                    <field name="hierarchy_level" eval="0"/>
+                    <field name="children_ids">
+
+                        <record id="exec_summary_capitaux" model="account.report.line">
+                            <field name="sequence" eval="120"/>
+                            <field name="name">Equity</field>
+                            <field name="name@fr">Capitaux propres</field>
+                            <field name="name@es">Fondos propios</field>
+                            <field name="name@de">Eigenkapital</field>
+                            <field name="name@nl">Eigen vermogen</field>
+                            <field name="name@it">Patrimonio netto</field>
+                            <field name="name@pt_BR">Patrimônio líquido</field>
+                            <field name="code">EXEC_CAPITAUX</field>
+                            <field name="hierarchy_level" eval="2"/>
+                            <field name="expression_ids">
+                                <record id="exec_summary_capitaux_balance" model="account.report.expression">
+                                    <field name="label">balance</field>
+                                    <field name="engine">domain</field>
+                                    <!--
+                                        Le type `equity`, pas le groupe interne.
+
+                                        Le groupe `equity` englobe le compte de
+                                        résultat non affecté, par lequel Odoo
+                                        passe les affectations. Une affectation
+                                        créditait les réserves et débitait ce
+                                        compte : les deux se compensaient, les
+                                        capitaux propres paraissaient inchangés
+                                        alors qu'ils venaient d'augmenter.
+                                    -->
+                                    <field name="formula">[('account_id.account_type', '=', 'equity')]</field>
+                                    <field name="subformula">-sum</field>
+                                    <field name="date_scope">from_beginning</field>
+                                </record>
+                            </field>
+                        </record>
+
+                        <record id="exec_summary_position_nette" model="account.report.line">
+                            <field name="sequence" eval="130"/>
+                            <field name="name">Net working capital</field>
+                            <field name="name@fr">Fonds de roulement net</field>
+                            <field name="name@es">Fondo de maniobra neto</field>
+                            <field name="name@de">Nettoumlaufvermögen</field>
+                            <field name="name@nl">Netto werkkapitaal</field>
+                            <field name="name@it">Capitale circolante netto</field>
+                            <field name="name@pt_BR">Capital de giro líquido</field>
+                            <field name="code">EXEC_POSITION_NETTE</field>
+                            <field name="hierarchy_level" eval="1"/>
+                            <!--
+                                Disponibilités **plus** besoin en fonds de
+                                roulement : ce qui est disponible ou le
+                                deviendra, moins ce qui est dû à court terme.
+
+                                C'est le chiffre qui répond à « puis-je payer
+                                mes fournisseurs ce mois-ci » : un solde
+                                bancaire confortable adossé à des dettes
+                                supérieures ne l'est pas, et c'est exactement
+                                ce qu'un dirigeant ne voit pas en regardant sa
+                                seule banque.
+
+                                Le besoin en fonds de roulement est déjà un
+                                solde net — ce que les tiers doivent moins ce
+                                qu'on leur doit. Le retrancher inversait le
+                                signe de ses deux composantes : une facture
+                                fournisseur impayée améliorait la position, une
+                                créance client la dégradait. La ligne disait
+                                donc le contraire de ce qu'on lui demande.
+
+                                Le libellé suit le calcul : disponibilités,
+                                créances et stocks moins les dettes à court
+                                terme sont un fonds de roulement, pas une
+                                position de trésorerie.
+                            -->
+                            <field name="aggregation_formula">EXEC_DISPO.balance + EXEC_BFR.balance</field>
+                        </record>
+                    </field>
+                </record>
+            </field>
+        </record>
+
+    </data>
+</odoo>
